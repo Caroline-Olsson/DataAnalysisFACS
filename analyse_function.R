@@ -1,5 +1,3 @@
-#Writes functions for creating plots and calculating data values
-#also
 #Writes a function that will establish a gating hierachy, create plots as well as extract fluorescence intensity 
 #and calculate RFP/GFP ratio
 #The gates might have to be adjusted when analysing a new dataset
@@ -83,19 +81,34 @@ datavalues_function <- function(subset=final){
         
         #calculate mean of rfp
         Mean_RFP <<- mean(RFP_values)
+        Median_RFP <<- median(RFP_values)
 
         #extract gfp values
         GFP_values <<- na.omit(datavalues[,9])
         
         #calculate mean of gfp
         Mean_GFP <<- mean(GFP_values)
+        Median_GFP <<- median(GFP_values)
         
         #Calculate the ratio between RFP_values and GFP_values
         Ratio_values <<- RFP_values/GFP_values
+        Ratio_values_frame <<- cbind(Ratio_values)
+        Final_with_ratios <<- cbind(final,Ratio_values_frame)
+        Final_with_ratios_sorted <<- Final_with_ratios[order(Ratio_values),]
+        Final_with_ratios_cropped <<- Final_with_ratios_sorted[1:(0.9*nrow(Final_with_ratios_sorted))]
+        
+        Ratio_values_mean <<- mean(Ratio_values)
+        Ratio_values_median <<- median(Ratio_values)
 
         #Calculate the ratio between Mean_RFP and Mean_GFP
-        Ratio <<- Mean_RFP/Mean_GFP
-        Ratio
+        Ratio_means <<- Mean_RFP/Mean_GFP
+        Ratio_medians <<- Median_RFP/Median_GFP
+}
+
+plot_ratio_function <- function(subset=Final_with_ratios_cropped){
+        #plot ratio_values
+        plot_ratio <<- autoplot(subset,"Ratio_values")  + xlab("RFP:GFP Ratio") + ylab("Density")
+        plot_ratio
 }
 
 analyse_function <- function(input) {
@@ -141,11 +154,19 @@ analyse_function <- function(input) {
         #Extracts the data from the final subset. This can be changed by giving the argument (1st argument) subset=...
         #Then extracts RFP_values, GFP_values and calculates Mean_RFP, Mean_GFP, Ratio
         datavalues_function()
+        assign(paste("Ratio_values_mean_", prefix, sep = ""), Ratio_values_mean, envir = .GlobalEnv)
+        assign(paste("Ratio_values_median_", prefix, sep = ""), Ratio_values_median, envir = .GlobalEnv)
+        assign(paste("Ratio_means_", prefix, sep = ""), Ratio_means, envir = .GlobalEnv)
+        
+        #Plot events in Ratio plot. Default subset used is Final_with_ratios_cropped, 
+        #this can be changed by giving the argument (2nd argument) subset=...
+        plot_ratio_function()
+        assign(paste("plot_Ratio_", prefix, sep = ""), plot_ratio, envir = .GlobalEnv)
         
         header<-substr(input,15,nchar(input)-4)
         
         #create vector of values 
-        v<-c(header, Mean_RFP, Mean_GFP, Ratio)
+        v<-c(header, Mean_RFP, Mean_GFP, Ratio_means, Ratio_medians, Ratio_values_mean, Ratio_values_median)
         
         #create a pdf file with all plots
         pdf(paste0("output_plots/",prefix,".pdf"))
@@ -155,6 +176,7 @@ analyse_function <- function(input) {
         plot(plot_RFP)
         plot(plot_GFP)
         plot(plot_RFPGFP)
+        plot(plot_ratio)
         dev.off()
         
         #create single images of the RFP vs GFP plot to use in rmarkdown
