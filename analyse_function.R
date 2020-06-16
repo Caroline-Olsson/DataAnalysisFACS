@@ -105,9 +105,9 @@ datavalues_function <- function(subset=final){
         Ratio_medians <<- Median_RFP/Median_GFP
 }
 
-plot_ratio_function <- function(subset=Final_with_ratios_cropped){
+plot_ratio_function <- function(subset=Final_with_ratios_cropped, x1=0, x2=100){
         #plot ratio_values
-        plot_ratio <<- autoplot(subset,"Ratio_values")  + xlab("RFP:GFP Ratio") + ylab("Density")
+        plot_ratio <<- autoplot(subset,"Ratio_values") + coord_cartesian(xlim=c(x1, x2)) + xlab("RFP:GFP Ratio") + ylab("Density")
         plot_ratio
 }
 
